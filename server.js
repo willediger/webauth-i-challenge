@@ -69,7 +69,25 @@ server.post("/api/login", async (req, res) => {
       message: "No credentials provided."
     });
   }
+});
+
+server.get("/api/logout", (req, res) => {
+  if (req.session && req.session.user) {
+    req.session.destroy(err => {
+      if (err) {
+        next({
+          status: 500,
+          message: "Attempt to log out failed."
+        });
+      } else {
+        res.status(200).json({ message: "Successfully logged out." });
+      }
+    });
+  } else {
+    res.status(200).json({ message: "You were already logged out." });
   }
+});
+
 server.get("/api/users", validate, async (req, res) => {
   let users = await db.find();
   if (users) {
