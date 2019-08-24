@@ -1,12 +1,26 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
+const session = require("express-session");
 
 const db = require("./users/users-model.js");
 
 const server = express();
 
+const sessionConfig = {
+  name: "webauth-1-challenge-wre",
+  secret: "double secret probation",
+  cookie: {
+    maxAge: 1000 * 300,
+    secure: false,
+    httpOnly: true
+  },
+  resave: false,
+  saveUninitialized: false
+};
+
 server.use(express.json());
 server.use(logger);
+server.use(session(sessionConfig));
 
 server.post("/api/register", async (req, res) => {
   let user = req.body;
@@ -24,24 +38,7 @@ server.post("/api/register", async (req, res) => {
   }
 });
 
-server.post("/api/login", validate, (req, res) => {
-  const { username } = req.headers;
-  res.status(200).json({ message: `Welcome ${username}!` });
-});
-
-server.get("/api/users", validate, async (req, res) => {
-  let users = await db.find();
-  if (users) {
-    res.status(200).json(users);
-  } else {
-    next({
-      status: 500,
-      message: "The users could not be retrieved."
-    });
-  }
-});
-
-async function validate(req, res, next) {
+server.post("/api/login", async (req, res) => {
   const { username, password } = req.headers;
 
   if (username && password) {
@@ -49,7 +46,8 @@ async function validate(req, res, next) {
     let result = await db.findBy({ username }).first();
     if (result) {
       if (bcrypt.compareSync(password, result.password)) {
-        next();
+        req.session.user = result;
+        res.status(200).json({ message: `Welcome ${username}!` });
       } else {
         next({
           status: 401,
@@ -68,7 +66,7 @@ async function validate(req, res, next) {
       message: "No credentials provided."
     });
   }
-}
+  }
 
 server.use(errHandler);
 
