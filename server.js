@@ -2,7 +2,9 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const session = require("express-session");
 
+const validate = require("./middleware/validate.js");
 const db = require("./users/users-model.js");
+
 
 const server = express();
 
@@ -21,6 +23,7 @@ const sessionConfig = {
 server.use(express.json());
 server.use(logger);
 server.use(session(sessionConfig));
+
 
 server.post("/api/register", async (req, res) => {
   let user = req.body;
@@ -67,6 +70,17 @@ server.post("/api/login", async (req, res) => {
     });
   }
   }
+server.get("/api/users", validate, async (req, res) => {
+  let users = await db.find();
+  if (users) {
+    res.status(200).json(users);
+  } else {
+    next({
+      status: 500,
+      message: "The users could not be retrieved."
+    });
+  }
+});
 
 server.use(errHandler);
 
