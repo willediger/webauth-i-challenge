@@ -5,6 +5,7 @@ const session = require("express-session");
 const validate = require("./middleware/validate.js");
 const db = require("./users/users-model.js");
 
+const restrictedRouter = require("./restricted/restricted-router.js");
 
 const server = express();
 
@@ -24,6 +25,7 @@ server.use(express.json());
 server.use(logger);
 server.use(session(sessionConfig));
 
+server.use("/api/restricted", restrictedRouter);
 
 server.post("/api/register", async (req, res) => {
   let user = req.body;
